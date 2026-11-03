@@ -1,0 +1,15 @@
+{
+  "name": "g3ops-electron-poc",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/*", "server"],
+  "scripts": {
+    "dev": "concurrently -n SERVER,WEB,DESKTOP -c auto \"npm run dev -w server\" \"npm run dev -w apps/web\" \"npm run dev -w apps/desktop\"",
+    "dev:server": "npm run dev -w server",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:desktop": "npm run dev -w apps/desktop",
+    "build:web": "npm run build -w apps/web",
+    "build:desktop": "npm run dist -w apps/desktop"
+  },
+  "devDependencies": {"concurrently": "^9.1.2"}
+}
