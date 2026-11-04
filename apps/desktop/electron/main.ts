@@ -1,6 +1,8 @@
-import {app,BrowserWindow,ipcMain,shell,screen} from 'electron';
+import {app,BrowserWindow,ipcMain,shell,screen,Tray,Menu,nativeImage} from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import electronUpdater from 'electron-updater';
 import { io, Socket } from 'socket.io-client';
 import os from 'node:os';
 
@@ -17,7 +19,35 @@ let socket: Socket | null = null;
 let current: any = null;
 let toastTimer: NodeJS.Timeout | null = null;
 
-const serverUrl = process.env.G3OPS_SERVER_URL || 'http://localhost:8787';
+const { autoUpdater } = electronUpdater;
+
+/**
+ * URL del servidor.
+ * - Desarrollo: variable de entorno G3OPS_SERVER_URL (opcional).
+ * - Instalado:  config.json, que se genera al compilar (scripts/write-config.mjs).
+ */
+function loadServerUrl(): string {
+  if (process.env.G3OPS_SERVER_URL) return process.env.G3OPS_SERVER_URL;
+
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8');
+    const { serverUrl } = JSON.parse(raw);
+    if (serverUrl) return serverUrl;
+  } catch {
+    // sin config.json: usamos el valor local de desarrollo
+  }
+
+  return 'http://localhost:8787';
+}
+
+const serverUrl = loadServerUrl();
+
+// Instancia única + modo oculto (arranque automático con Windows)
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) app.quit();
+
+const startHidden = process.argv.includes('--hidden');
+let tray: Tray | null = null;
 
 const deviceId = (process.env.G3OPS_DEVICE_ID || os.hostname()).toUpperCase();
 
@@ -37,10 +67,9 @@ function rendererUrl(route = '') {
     return `${dev}/#${route}`;
   }
 
-  return `file://${path.join(
-    __dirname,
-    '../dist/index.html'
-  )}#${route}`;
+  return `${pathToFileURL(
+    path.join(__dirname, '../dist/index.html')
+  ).href}#${route}`;
 }
 
 /**
@@ -389,7 +418,10 @@ function connect() {
   console.log('[Electron] Título:', notification.title);
   console.log('[Electron] Mensaje:', notification.message);
   console.log('[Electron] Tipo:', notification.type);
-  console.log('[Electron] Datos completos:', notification);
+  console.log('[Electron] Datos completos:', {
+    ...notification,
+    imageUrl: notification.imageUrl ? '[imagen]' : ''
+  });
   console.log('======================================');
 
   showToast(notification);
@@ -397,9 +429,65 @@ function connect() {
 }
 
 /**
+ * Icono junto al reloj: permite abrir el panel o cerrar el agente.
+ */
+function createTray() {
+  // Instalado: dist/icon.png · Desarrollo: public/icon.png
+  const iconPath = [
+    path.join(__dirname, '../dist/icon.png'),
+    path.join(__dirname, '../public/icon.png')
+  ].find((candidate) => fs.existsSync(candidate));
+
+  if (!iconPath) {
+    console.warn('[Tray] No se encontró icon.png, se omite el icono de bandeja');
+    return;
+  }
+
+  const icon = nativeImage.createFromPath(iconPath);
+
+  tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  tray.setToolTip('G3 Ops Notify — conectado en segundo plano');
+
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Abrir G3 Ops Notify', click: () => createSettings() },
+      { type: 'separator' },
+      { label: 'Salir', click: () => app.quit() }
+    ])
+  );
+
+  tray.on('click', () => createSettings());
+}
+
+/**
+ * Actualizaciones automáticas (solo en la versión instalada).
+ * Descarga en segundo plano e instala al cerrar el agente.
+ */
+function setupAutoUpdate() {
+  if (!app.isPackaged) return;
+
+  const check = () =>
+    autoUpdater.checkForUpdates().catch((error) => {
+      console.error('[Update] Error:', error.message);
+    });
+
+  check();
+  setInterval(check, 6 * 60 * 60 * 1000);
+}
+
+/**
+ * Cuando se abre una segunda vez, mostramos el panel de la primera.
+ */
+app.on('second-instance', () => {
+  if (app.isReady()) createSettings();
+});
+
+/**
  * Inicio de Electron.
  */
 app.whenReady().then(() => {
+  if (!gotLock) return;
+
   app.setAppUserModelId(
     'com.g3ops.notify.poc'
   );
@@ -408,13 +496,22 @@ app.whenReady().then(() => {
    * Hace que Electron pueda iniciar
    * automáticamente con Windows.
    */
-  app.setLoginItemSettings({
-    openAtLogin: true
-  });
+  // Solo en la versión instalada (en desarrollo registraría electron.exe)
+  if (app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      args: ['--hidden']
+    });
+  }
 
   connect();
+  createTray();
+  setupAutoUpdate();
 
-  createSettings();
+  // Al iniciar con Windows queda en segundo plano, sin abrir ventana
+  if (!startHidden) {
+    createSettings();
+  }
 });
 
 /**

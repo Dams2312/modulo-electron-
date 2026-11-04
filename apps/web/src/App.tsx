@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { BellRing, Send, MonitorSmartphone, ShieldCheck, Radio, Image as ImageIcon, Upload, X } from 'lucide-react';
+import InstallPage from './pages/InstallPage';
 
 const SERVER = import.meta.env.VITE_SERVER_URL || 'http://localhost:8787';
 const MAX_SIDE = 1280;
@@ -30,7 +31,7 @@ function compressImage(file: File): Promise<string> {
   });
 }
 
-export default function App() {
+function Panel() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('g3ops_api_key') || '');
   const [needsKey] = useState(() => !localStorage.getItem('g3ops_api_key'));
   const [title, setTitle] = useState('Comunicado G3 Ops');
@@ -293,4 +294,9 @@ function Card({ icon, title, children }: { icon: React.ReactNode; title: string;
       <p className="text-sm leading-6 text-slate-500">{children}</p>
     </div>
   );
+}
+
+/** Elige la vista según la dirección: /#/instalar = página de descarga. */
+export default function App() {
+  return window.location.hash.startsWith('#/instalar') ? <InstallPage /> : <Panel />;
 }

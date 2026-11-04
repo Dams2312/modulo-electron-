@@ -1,1 +1,71 @@
-{"name":"@g3ops/desktop","private":true,"version":"0.1.0","main":"dist-electron/main.js","type":"module","scripts":{"dev":"concurrently \"vite --host 0.0.0.0\" \"tsc -p tsconfig.electron.json --watch\" \"wait-on tcp:5174 dist-electron/main.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5174 electron .\"","dist":"tsc -p tsconfig.electron.json && vite build && electron-builder --win nsis"},"dependencies":{"@vitejs/plugin-react":"^4.4.1","vite":"^6.2.2","typescript":"~5.7.2","react":"^19.0.0","react-dom":"^19.0.0","socket.io-client":"^4.8.1","lucide-react":"^0.468.0"},"devDependencies":{"@types/node":"^22.13.10","@types/react":"^19.0.10","@types/react-dom":"^19.0.4","electron":"^36.0.0","electron-builder":"^26.0.12","concurrently":"^9.1.2","cross-env":"^7.0.3","wait-on":"^8.0.3","tailwindcss":"^3.4.17","postcss":"^8.5.3","autoprefixer":"^10.4.21"},"build":{"appId":"com.g3ops.notify.poc","productName":"G3 Ops Notify","directories":{"output":"release"},"files":["dist/**/*","dist-electron/**/*","package.json"],"win":{"target":"nsis"},"nsis":{"oneClick":true,"perMachine":false,"allowElevation":false,"createDesktopShortcut":true,"createStartMenuShortcut":true}}}
+{
+  "name": "@g3ops/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Agente de notificaciones G3 Ops",
+  "author": "Danny desarrollador",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"vite --host 0.0.0.0\" \"tsc -p tsconfig.electron.json --watch\" \"wait-on tcp:5174 dist-electron/main.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5174 electron .\"",
+    "dist": "tsc -p tsconfig.electron.json && node scripts/write-config.mjs && vite build && electron-builder --win nsis",
+    "release": "tsc -p tsconfig.electron.json && node scripts/write-config.mjs && vite build && electron-builder --win nsis --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.12",
+    "lucide-react": "^0.468.0",
+    "postcss": "^8.5.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.2",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.g3ops.notify.poc",
+    "productName": "G3 Ops Notify",
+    "electronVersion": "36.9.5",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "G3-Ops-Notify-Setup.exe"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Dams2312",
+        "repo": "g3ops-notify-releases"
+      }
+    ]
+  }
+}
