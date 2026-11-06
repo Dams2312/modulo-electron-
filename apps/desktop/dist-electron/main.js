@@ -34,6 +34,10 @@ function loadServerUrl() {
     return 'http://localhost:8787';
 }
 const serverUrl = loadServerUrl();
+// En desarrollo usamos una carpeta de datos propia para no chocar con el agente instalado
+if (!app.isPackaged) {
+    app.setPath('userData', path.join(app.getPath('appData'), 'g3ops-notify-dev'));
+}
 // Instancia única + modo oculto (arranque automático con Windows)
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock)

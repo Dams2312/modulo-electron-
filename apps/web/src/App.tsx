@@ -286,7 +286,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function Card({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="shadow-lg shadow-slate-200/60">
+    <div className="glass rounded-3xl border border-white p-6 shadow-lg shadow-slate-200/60">
       <div className="mb-3 flex items-center gap-3 text-sky-600">
         <span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-100">{icon}</span>
         <b className="text-slate-900">{title}</b>
