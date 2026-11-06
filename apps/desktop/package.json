@@ -1,7 +1,7 @@
 {
   "name": "@g3ops/desktop",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Agente de notificaciones G3 Ops",
   "author": "Danny desarrollador",
   "main": "dist-electron/main.js",

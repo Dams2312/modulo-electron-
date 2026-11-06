@@ -480,7 +480,6 @@ function Toast({
           border
           border-slate-200
           bg-white
-          shadow-2xl
           shadow-slate-900/20
           ${urgent ? 'ring-2 ring-red-400' : ''}
         `}
