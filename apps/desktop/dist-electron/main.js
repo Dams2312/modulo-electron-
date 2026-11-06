@@ -184,7 +184,7 @@ function showToast(notification) {
         x: Math.round(workArea.x + workArea.width - toastWidth - 20),
         y: Math.round(workArea.y + workArea.height - toastHeight - 20),
         frame: false,
-        transparent: false,
+        transparent: true,
         resizable: false,
         movable: false,
         alwaysOnTop: true,
@@ -335,6 +335,11 @@ function createTray() {
 function setupAutoUpdate() {
     if (!app.isPackaged)
         return;
+    // Cuando termina de descargar, se instala sola y reabre el agente
+    autoUpdater.on('update-downloaded', () => {
+        console.log('[Update] Descargada. Instalando...');
+        autoUpdater.quitAndInstall(true, true);
+    });
     const check = () => autoUpdater.checkForUpdates().catch((error) => {
         console.error('[Update] Error:', error.message);
     });
